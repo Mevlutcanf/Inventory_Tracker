@@ -1,0 +1,204 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var currentQuery = ViewData["Query"]?.ToString();
+    var currentEmployeeId = ViewData["EmployeeId"]?.ToString();
+    var currentDepartment = ViewData["Department"]?.ToString();
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Dashboard</h1>
+        <div class="page-subtitle">Sistem genel durumu ve son işlemler</div>
+    </div>
+
+    <div class="actions-toolbar">
+        <a class="btn btn-outline-light btn-sm" asp-controller="Assets" asp-action="Index">Export</a>
+        <a class="btn btn-primary btn-sm" asp-controller="Assets" asp-action="Create">Varlık Ekle</a>
+        <a class="btn btn-primary btn-sm" asp-controller="Assignments" asp-action="Create">Zimmet Oluştur</a>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon"><i class="bi bi-pc-display-horizontal"></i></div>
+        <div class="stat-body">
+            <div class="stat-label">Toplam Envanter</div>
+            <div class="stat-value">@Model.AssetCount</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="bi bi-people"></i></div>
+        <div class="stat-body">
+            <div class="stat-label">Aktif Çalışan</div>
+            <div class="stat-value">@Model.EmployeeCount</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
+        <div class="stat-body">
+            <div class="stat-label">Zimmetli Cihaz</div>
+            <div class="stat-value">@Model.AssignedAssetCount</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="bi bi-check2-circle"></i></div>
+        <div class="stat-body">
+            <div class="stat-label">Müsait Cihaz</div>
+            <div class="stat-value">@Model.AvailableAssetCount</div>
+        </div>
+    </div>
+</div>
+
+<form method="get" class="filter-bar mb-4">
+    <input name="q" value="@currentQuery" class="form-control" placeholder="Zimmet, çalışan, departman veya varlık ara" />
+    <select name="employeeId" class="form-select">
+        <option value="">Tüm çalışanlar</option>
+        @foreach (var employee in (ViewBag.Employees as List<InventoryChecker.Models.Employee> ?? Enumerable.Empty<InventoryChecker.Models.Employee>()))
+        {
+            <option value="@employee.Id" selected="@(currentEmployeeId == employee.Id.ToString())">@employee.FullName</option>
+        }
+    </select>
+    <select name="department" class="form-select">
+        <option value="">Tüm departmanlar</option>
+        @foreach (var item in (ViewBag.Departments as List<string> ?? Enumerable.Empty<string>()))
+        {
+            <option value="@item" selected="@(currentDepartment == item)">@item</option>
+        }
+    </select>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-outline-light w-100">Filtrele</button>
+        <a class="btn btn-light w-100" asp-action="Index">Sıfırla</a>
+    </div>
+</form>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="content-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <h2 class="section-title mb-1">Aylık Varlık Akışı</h2>
+                    <p class="page-subtitle mb-0">@Model.CurrentMonthLabel için eklenen ve elden çıkarılan ürün dağılımı.</p>
+                </div>
+                <span class="summary-chip">Bu ay</span>
+            </div>
+
+            <div class="chart-shell">
+                <canvas id="assetLifecycleChart" height="240"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="content-card h-100">
+            <h2 class="section-title">Aylık Özet</h2>
+            <div class="monthly-summary">
+                <div class="monthly-item">
+                    <span class="monthly-label">Bu ay eklenen ürün</span>
+                    <strong>@Model.MonthlyAddedAssets</strong>
+                </div>
+                <div class="monthly-item">
+                    <span class="monthly-label">Bu ay elden çıkarılan ürün</span>
+                    <strong>@Model.MonthlyDisposedAssets</strong>
+                </div>
+            </div>
+
+            <div class="alert alert-light border mt-3 mb-0">
+                Gerçek kullanımda bu alan satın alma ve emeklilik verilerinden otomatik beslenir.
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="section-title mt-4">Son Zimmetler</h2>
+
+<div class="table-responsive table-wrap">
+    <table class="table table-hover table-striped align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Zimmet Kodu</th>
+                <th>Varlık</th>
+                <th>Çalışan</th>
+                <th>Departman</th>
+                <th>Tarih</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.ActiveAssignments == null || !Model.ActiveAssignments.Any())
+        {
+            <tr>
+                <td colspan="5">
+                    <div class="empty-state">
+                        <p class="mb-0 text-muted">Henüz aktif zimmet yok.</p>
+                    </div>
+                </td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var item in Model.ActiveAssignments)
+            {
+                <tr>
+                    <td>@item.AssetTag</td>
+                    <td>@item.AssetName</td>
+                    <td>@item.EmployeeName</td>
+                    <td>@item.Department</td>
+                    <td>@item.AssignedOn.ToString("dd.MM.yyyy")</td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        (() => {
+            const canvas = document.getElementById('assetLifecycleChart');
+            if (!canvas || typeof Chart === 'undefined') {
+                return;
+            }
+
+            const theme = getComputedStyle(document.body);
+            const mutedColor = theme.getPropertyValue('--muted').trim() || '#5d6b7e';
+            const accent = theme.getPropertyValue('--accent').trim() || '#267dff';
+            const accent2 = theme.getPropertyValue('--accent-2').trim() || '#16a34a';
+
+            new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Bu ay eklenen', 'Bu ay elden çıkarılan'],
+                    datasets: [{
+                        data: [@Model.MonthlyAddedAssets, @Model.MonthlyDisposedAssets],
+                        backgroundColor: [accent, accent2],
+                        borderWidth: 0,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    cutout: '66%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: mutedColor,
+                                padding: 18,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.parsed}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
+}

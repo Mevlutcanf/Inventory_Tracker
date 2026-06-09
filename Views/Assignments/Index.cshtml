@@ -1,0 +1,92 @@
+@model IEnumerable<AssetAssignment>
+@{
+    ViewData["Title"] = "Zimmetler";
+    var currentQuery = ViewData["Query"]?.ToString();
+    var currentActiveOnly = ViewData["ActiveOnly"]?.ToString();
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Zimmet Geçmişi</h1>
+        <div class="page-subtitle">Kişi, departman ve cihaz bazında zimmet akışını tek ekranda görün.</div>
+    </div>
+    <div class="actions-toolbar">
+        <a class="btn btn-primary btn-sm" asp-action="Create">Yeni Zimmet</a>
+    </div>
+</div>
+
+<form method="get" class="filter-bar" style="display:flex;gap:8px;align-items:center;">
+    <input name="q" value="@currentQuery" class="form-control" placeholder="Zimmet kodu, çalışan veya varlık ara" />
+    <select name="employeeId" class="form-select">
+        <option value="">Tümü</option>
+        @foreach (var e in (ViewBag.Employees as List<InventoryChecker.Models.Employee> ?? Enumerable.Empty<InventoryChecker.Models.Employee>()))
+        {
+            <option value="@e.Id" selected="@(ViewData["EmployeeId"]?.ToString() == e.Id.ToString())">@e.FullName</option>
+        }
+    </select>
+    <select name="department" class="form-select">
+        <option value="">Tüm Departmanlar</option>
+        @foreach (var d in (ViewBag.Departments as List<string> ?? Enumerable.Empty<string>()))
+        {
+            <option value="@d" selected="@(ViewData["Department"]?.ToString() == d)">@d</option>
+        }
+    </select>
+    <select name="activeOnly" class="form-select">
+        <option value="">Tümü</option>
+        <option value="true" selected="@(currentActiveOnly == "True")">Sadece aktifler</option>
+    </select>
+    <button type="submit" class="btn btn-outline-light">Filtrele</button>
+</form>
+
+<div class="table-summary">
+    <span class="summary-chip">Toplam satır: @Model.Count()</span>
+    <span class="summary-chip">Aktif: @Model.Count(x => x.ReturnedOn is null)</span>
+    <span class="summary-chip">Kapalı: @Model.Count(x => x.ReturnedOn is not null)</span>
+</div>
+
+<div class="table-wrap">
+    <table class="table table-hover table-striped align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Zimmet</th>
+                <th>Çalışan</th>
+                <th>Atama</th>
+                <th>Dönüş</th>
+                <th>Durum</th>
+                <th class="text-end">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (!Model.Any())
+        {
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <h3>Gösterilecek zimmet yok</h3>
+                        <p>Yeni bir zimmet oluşturarak akışı başlatabilirsiniz.</p>
+                    </div>
+                </td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var assignment in Model)
+            {
+                <tr>
+                    <td>@assignment.Asset.AssetTag</td>
+                    <td>@assignment.Employee.FullName</td>
+                    <td>@assignment.AssignedOn.ToString("dd.MM.yyyy")</td>
+                    <td>@assignment.ReturnedOn?.ToString("dd.MM.yyyy")</td>
+                    <td><span class="status-pill @(assignment.ReturnedOn is null ? "is-danger" : "is-ok")">@(assignment.ReturnedOn is null ? "Aktif" : "Kapalı")</span></td>
+                    <td class="text-end action-links">
+                        @if (assignment.ReturnedOn is null)
+                        {
+                            <a asp-action="Return" asp-route-id="@assignment.Id">İade Al</a>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>

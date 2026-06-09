@@ -1,0 +1,75 @@
+@model IEnumerable<Employee>
+@{
+    ViewData["Title"] = "Çalışanlar";
+    var currentQuery = ViewData["Query"]?.ToString();
+    var currentActive = ViewData["Active"]?.ToString();
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Çalışan Listesi</h1>
+        <div class="page-subtitle">Personel durumunu ve departman dağılımını sade bir arayüzde izleyin.</div>
+    </div>
+    <div class="actions-toolbar">
+        <a class="btn btn-primary btn-sm" asp-action="Create">Yeni Çalışan</a>
+    </div>
+</div>
+
+<form method="get" class="filter-bar">
+    <input name="q" value="@currentQuery" class="form-control" placeholder="Ad, departman, unvan veya e-posta ara" />
+    <select name="active" class="form-select">
+        <option value="">Tümü</option>
+        <option value="true" selected="@(currentActive == "True")">Aktif</option>
+        <option value="false" selected="@(currentActive == "False")">Pasif</option>
+    </select>
+    <button type="submit" class="btn btn-outline-light">Filtrele</button>
+</form>
+
+<div class="table-summary">
+    <span class="summary-chip">Toplam satır: @Model.Count()</span>
+</div>
+
+<div class="table-wrap">
+    <table class="table table-hover table-striped align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Ad Soyad</th>
+                <th>Departman</th>
+                <th>Unvan</th>
+                <th>E-posta</th>
+                <th>Durum</th>
+                <th class="text-end">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (!Model.Any())
+        {
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <h3>Eşleşen çalışan bulunamadı</h3>
+                        <p>Arama kriterlerini değiştirin veya yeni çalışan kaydı oluşturun.</p>
+                    </div>
+                </td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var employee in Model)
+            {
+                <tr>
+                    <td><a asp-action="Details" asp-route-id="@employee.Id">@employee.FullName</a></td>
+                    <td>@employee.Department</td>
+                    <td>@employee.Title</td>
+                    <td>@employee.Email</td>
+                    <td><span class="status-pill @(employee.IsActive ? "is-ok" : "is-danger")">@(employee.IsActive ? "Aktif" : "Pasif")</span></td>
+                    <td class="text-end action-links">
+                        <a asp-action="Edit" asp-route-id="@employee.Id">Düzenle</a>
+                        <a asp-action="Delete" asp-route-id="@employee.Id">Sil</a>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>

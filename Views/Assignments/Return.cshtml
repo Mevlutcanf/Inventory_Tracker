@@ -1,0 +1,15 @@
+@model AssetAssignment
+@{
+    ViewData["Title"] = "İade Al";
+}
+
+<div class="page-panel">
+    <h2>@Model.Asset.AssetTag</h2>
+    <p>@Model.Asset.Name varlığını @Model.Employee.FullName üzerinden iade almak üzeresiniz.</p>
+
+    <form asp-action="ReturnConfirmed" method="post">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-warning">İade Al</button>
+        <a asp-action="Index" class="btn btn-outline-light">Vazgeç</a>
+    </form>
+</div>

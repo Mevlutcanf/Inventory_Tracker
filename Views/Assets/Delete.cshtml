@@ -1,0 +1,15 @@
+@model Asset
+@{
+    ViewData["Title"] = "Varlık Sil";
+}
+
+<div class="page-panel">
+    <h2>@Model.AssetTag</h2>
+    <p>@Model.Name kaydını silmek istediğinize emin misiniz?</p>
+
+    <form asp-action="Delete" method="post">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger">Sil</button>
+        <a asp-action="Index" class="btn btn-outline-light">Vazgeç</a>
+    </form>
+</div>

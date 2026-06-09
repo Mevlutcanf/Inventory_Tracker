@@ -1,0 +1,102 @@
+@model IEnumerable<Asset>
+@{
+    ViewData["Title"] = "Envanter";
+    var currentQuery = ViewData["Query"]?.ToString();
+    var currentStatus = ViewData["Status"]?.ToString();
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Envanter Listesi</h1>
+        <div class="page-subtitle">Varlıkları filtreleyin, durumlarını izleyin ve yönetim akışını sade tutun.</div>
+    </div>
+    <div class="actions-toolbar">
+        <a class="btn btn-primary btn-sm" asp-action="Create">Yeni Varlık</a>
+    </div>
+</div>
+
+<form method="get" class="filter-bar">
+    <input name="q" value="@currentQuery" class="form-control" placeholder="Kod, ad, seri no, marka veya konum ara" />
+    <select name="status" class="form-select">
+        <option value="">Tüm durumlar</option>
+        <option value="Available" selected="@(currentStatus == "Available")">Müsait</option>
+        <option value="Assigned" selected="@(currentStatus == "Assigned")">Zimmetli</option>
+        <option value="Maintenance" selected="@(currentStatus == "Maintenance")">Bakımda</option>
+        <option value="Retired" selected="@(currentStatus == "Retired")">Emekli</option>
+    </select>
+    <button type="submit" class="btn btn-outline-light">Filtrele</button>
+</form>
+
+<div class="table-summary">
+    <span class="summary-chip">Toplam satır: @Model.Count()</span>
+    <span class="summary-chip">Müsait: @Model.Count(x => x.Status == AssetStatus.Available)</span>
+    <span class="summary-chip">Zimmetli: @Model.Count(x => x.Status == AssetStatus.Assigned)</span>
+    <span class="summary-chip">Bakımda: @Model.Count(x => x.Status == AssetStatus.Maintenance)</span>
+    <span class="summary-chip">Emekli: @Model.Count(x => x.Status == AssetStatus.Retired)</span>
+</div>
+
+<div class="table-wrap">
+    <table class="table table-hover table-striped align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Kod</th>
+                <th>Ad</th>
+                <th>Kategori</th>
+                <th>Konum</th>
+                <th>Durum</th>
+                <th class="text-end">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (!Model.Any())
+        {
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <h3>Eşleşen kayıt bulunamadı</h3>
+                        <p>Arama kriterlerini daraltmak yerine farklı bir filtre deneyin veya yeni varlık ekleyin.</p>
+                    </div>
+                </td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var asset in Model)
+            {
+                <tr>
+                    <td>@asset.AssetTag</td>
+                    <td>@asset.Name</td>
+                    <td>@asset.Category</td>
+                    <td>@asset.Location</td>
+                    <td><span class="status-pill @GetStatusClass(asset.Status)">@GetStatusText(asset.Status)</span></td>
+                    <td class="text-end action-links">
+                        <a asp-action="Details" asp-route-id="@asset.Id">Detay</a>
+                        <a asp-action="Edit" asp-route-id="@asset.Id">Düzenle</a>
+                        <a asp-action="Delete" asp-route-id="@asset.Id">Sil</a>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+@functions {
+    private string GetStatusClass(AssetStatus status) => status switch
+    {
+        AssetStatus.Available => "is-ok",
+        AssetStatus.Assigned => "is-danger",
+        AssetStatus.Maintenance => "is-warning",
+        AssetStatus.Retired => "",
+        _ => string.Empty
+    };
+
+    private string GetStatusText(AssetStatus status) => status switch
+    {
+        AssetStatus.Available => "Müsait",
+        AssetStatus.Assigned => "Zimmetli",
+        AssetStatus.Maintenance => "Bakımda",
+        AssetStatus.Retired => "Emekli",
+        _ => status.ToString()
+    };
+}

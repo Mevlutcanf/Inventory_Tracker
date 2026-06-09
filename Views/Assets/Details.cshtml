@@ -1,0 +1,61 @@
+@model Asset
+@{
+    ViewData["Title"] = "Varlık Detay";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">@Model.Name</h1>
+        <div class="page-subtitle">@Model.AssetTag · @Model.Category</div>
+    </div>
+</div>
+
+<div class="content-card mb-4">
+    <div class="detail-grid">
+        <div><strong>Marka:</strong> @Model.Brand</div>
+        <div><strong>Model:</strong> @Model.Model</div>
+        <div><strong>Seri No:</strong> @Model.SerialNumber</div>
+        <div><strong>Konum:</strong> @Model.Location</div>
+        <div><strong>Durum:</strong> <span class="status-pill @(Model.Status == AssetStatus.Available ? "is-ok" : Model.Status == AssetStatus.Assigned ? "is-danger" : Model.Status == AssetStatus.Maintenance ? "is-warning" : "")">@Model.Status</span></div>
+        <div><strong>Kayıt Tarihi:</strong> @Model.PurchasedOn?.ToString("dd.MM.yyyy")</div>
+        <div><strong>Elden Çıkarma:</strong> @(Model.RetiredOn?.ToString("dd.MM.yyyy") ?? "-")</div>
+    </div>
+</div>
+
+<h3 class="section-title">Zimmet Geçmişi</h3>
+<div class="table-wrap">
+    <table class="table table-hover table-striped align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Çalışan</th>
+                <th>Atama</th>
+                <th>Dönüş</th>
+                <th>Not</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (!Model.Assignments.Any())
+        {
+            <tr>
+                <td colspan="4">
+                    <div class="empty-state">
+                        <p class="mb-0 text-muted">Henüz zimmet geçmişi yok.</p>
+                    </div>
+                </td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var assignment in Model.Assignments.OrderByDescending(x => x.AssignedOn))
+            {
+                <tr>
+                    <td>@assignment.Employee.FullName</td>
+                    <td>@assignment.AssignedOn.ToString("dd.MM.yyyy")</td>
+                    <td>@assignment.ReturnedOn?.ToString("dd.MM.yyyy")</td>
+                    <td>@assignment.Notes</td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>

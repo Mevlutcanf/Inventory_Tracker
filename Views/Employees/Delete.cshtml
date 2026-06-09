@@ -1,0 +1,14 @@
+@model Employee
+@{
+    ViewData["Title"] = "Çalışan Sil";
+}
+
+<div class="page-panel">
+    <h2>@Model.FullName</h2>
+    <p>Bu çalışan kaydını silmek istediğinize emin misiniz?</p>
+    <form asp-action="Delete" method="post">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger">Sil</button>
+        <a asp-action="Index" class="btn btn-outline-light">Vazgeç</a>
+    </form>
+</div>

@@ -1,0 +1,87 @@
+@model Employee
+@{
+    ViewData["Title"] = "Çalışan Detayı";
+    var total = ViewData["TotalAssignments"] as int? ?? 0;
+    var active = ViewData["ActiveAssignments"] as int? ?? 0;
+    var byCategory = ViewData["ByCategory"] as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+}
+
+<div class="section-header">
+    <h2>@Model.FullName</h2>
+    <a class="btn btn-outline-light" asp-action="Index">Geri</a>
+</div>
+
+<div class="content-card">
+    <div style="display:flex;gap:18px;align-items:center;">
+        <div style="flex:1;">
+            <div><strong>Departman:</strong> @Model.Department</div>
+            <div><strong>Unvan:</strong> @Model.Title</div>
+            <div><strong>E-posta:</strong> @Model.Email</div>
+            <div style="margin-top:8px;"><strong>Toplam Zimmet:</strong> @total — <strong>Aktif:</strong> @active</div>
+        </div>
+        <div style="min-width:260px;">
+            <div class="metric-list">
+                @if (byCategory.Any())
+                {
+                    <ul style="list-style:none;padding:0;margin:0;">
+                        @foreach (var c in byCategory)
+                        {
+                            <li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+                                <strong>@c.Category</strong>
+                                <span style="float:right;opacity:0.9">@c.Active / @c.Total</span>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <p>Henüz atama kaydı yok.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <hr />
+
+    <h3>Zimmet Geçmişi</h3>
+    <div class="table-wrap" style="margin-top:10px;">
+        <table class="table table-dark table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Varlık</th>
+                    <th>Kategori</th>
+                    <th>Atama</th>
+                    <th>Dönüş</th>
+                    <th>Durum</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Assignments.Any())
+                {
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <p>Görünecek zimmet bulunmuyor.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var a in Model.Assignments.OrderByDescending(x => x.AssignedOn))
+                    {
+                        <tr>
+                            <td>@a.Asset.AssetTag — @a.Asset.Name</td>
+                            <td>@a.Asset.Category</td>
+                            <td>@a.AssignedOn.ToString("dd.MM.yyyy")</td>
+                            <td>@a.ReturnedOn?.ToString("dd.MM.yyyy")</td>
+                            <td><span class="status-pill @(a.ReturnedOn is null ? "is-danger" : "is-ok")">@(a.ReturnedOn is null ? "Aktif" : "Kapalı")</span></td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
